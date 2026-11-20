@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="panel narrow"><h1>{{ titulo|default:'Formulario' }}</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Guardar</button> <a href="{% url 'inicio' %}">Cancelar</a></form></section>{% endblock %}
