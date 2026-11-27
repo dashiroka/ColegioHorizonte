@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block content %}
+<h2>Reportes académicos y financieros</h2>
+<form method="get" style="background:white;padding:16px;border-radius:8px">
+<label>Reporte: <select name="tipo">{% for k,v in tipos.items %}<option value="{{ k }}" {% if k == codigo %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+<label>Período: <input name="periodo" value="{{ periodo }}" placeholder="2026"></label>
+<label>Estudiante (nombre/documento): <input name="estudiante" value="{{ estudiante }}"></label>
+<label>Grado: <input name="grado" value="{{ grado }}"></label>
+<label>Estado: <input name="estado" value="{{ estado }}"></label>
+<button type="submit">Consultar</button>
+<button type="submit" name="descargar" value="xlsx">Exportar Excel</button>
+<button type="submit" name="descargar" value="pdf">Exportar PDF</button>
+</form>
+<h3>{{ titulo_reporte }}</h3><p>Registros mostrados: {{ filas|length }}</p>
+<div style="overflow:auto;background:white;padding:12px;border-radius:8px"><table><thead><tr>{% for c in columnas %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+<tbody>{% for fila in filas %}<tr>{% for valor in fila %}<td>{{ valor }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="8">Sin registros para los filtros seleccionados.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

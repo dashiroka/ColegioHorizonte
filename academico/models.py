@@ -102,8 +102,8 @@ class Obligacion(models.Model):
     def estado(self):
         if self.anulada: return 'Anulado'
         if self.saldo <= 0: return 'Pagado'
-        if self.vencimiento < timezone.localdate(): return 'Vencido'
         if self.abonado() > 0: return 'Pago parcial'
+        if self.vencimiento < timezone.localdate(): return 'Vencido'
         return 'Pendiente'
     def __str__(self): return f'{self.descripcion} - {self.matricula.numero}'
 

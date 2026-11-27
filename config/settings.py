@@ -39,3 +39,12 @@ SESSION_COOKIE_SECURE=not DEBUG
 CSRF_COOKIE_SECURE=not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF=True
 SECURE_REFERRER_POLICY='same-origin'
+
+# Seguridad para despliegue con HTTPS (no activar DEBUG en producción).
+SESSION_COOKIE_AGE=3600
+SESSION_SAVE_EVERY_REQUEST=True
+SECURE_SSL_REDIRECT=os.environ.get('SECURE_SSL_REDIRECT','False').lower()=='true'
+X_FRAME_OPTIONS='DENY'
+
+# Caché de desarrollo para controles temporales de login. En servidores múltiples usar caché compartida.
+CACHES={"default":{"BACKEND":"django.core.cache.backends.locmem.LocMemCache","LOCATION":"colegio-horizonte-security"}}

@@ -6,7 +6,7 @@ from academico.models import Grado,Grupo,PeriodoAcademico,ConceptoCobro
 class Command(BaseCommand):
     help='Crea roles y catálogos; usuarios se crean de forma segura por consola.'
     def handle(self,*args,**kwargs):
-        for r in ['Administrador','Secretaría académica','Tesorería','Director']:
+        for r in ['Administrador','Secretaría académica','Tesorería','Director','Docente']:
             Group.objects.get_or_create(name=r)
         for nombre in ['Sexto','Séptimo','Octavo','Noveno','Décimo','Undécimo']:
             g,_=Grado.objects.get_or_create(nombre=nombre)

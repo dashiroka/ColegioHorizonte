@@ -104,15 +104,30 @@ def cartera(request):
     return render(request,'cartera.html',{'pendientes':pendientes,'saldo_total':sum((o.saldo for o in pendientes),Decimal('0.00'))})
 @rol('Director','Tesorería','Administrador','Secretaría académica')
 def reporte(request):
-    import csv
-    from django.utils import timezone
-    if request.GET.get('descargar')=='csv':
-        response=HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition']='attachment; filename="matriculas.csv"'
-        writer=csv.writer(response); writer.writerow(['Número','Estudiante','Grupo','Período','Estado'])
-        for m in Matricula.objects.select_related('estudiante','grupo','periodo'):
-            writer.writerow([m.numero,str(m.estudiante),str(m.grupo),str(m.periodo),m.estado])
-        return response
-    return render(request,'reporte.html',{'matriculas':Matricula.objects.select_related('estudiante','grupo','periodo')})
+    """Diez reportes reales con filtros y exportación a Excel/PDF."""
+    from .reportes import obtener_reporte, generar_excel, generar_pdf, DEFINICIONES
+    codigo=request.GET.get('tipo','matriculados')
+    if codigo not in DEFINICIONES: codigo='matriculados'
+    periodo=request.GET.get('periodo','').strip()
+    estudiante=request.GET.get('estudiante','').strip()
+    estado=request.GET.get('estado','').strip()
+    grado=request.GET.get('grado','').strip()
+    columnas,filas=obtener_reporte(codigo,periodo=periodo,estudiante=estudiante,estado=estado,grado=grado)
+    formato=request.GET.get('descargar','')
+    if formato=='xlsx': return generar_excel(codigo,columnas,filas)
+    if formato=='pdf': return generar_pdf(codigo,columnas,filas)
+    return render(request,'reportes_final.html',{
+        'tipos':DEFINICIONES,'codigo':codigo,'titulo_reporte':DEFINICIONES[codigo],
+        'columnas':columnas,'filas':filas,'periodo':periodo,'estudiante':estudiante,'estado':estado,'grado':grado})
+
 @rol('Administrador')
 def auditoria(request): return render(request,'lista.html',{'titulo':'Auditoría','objetos':Auditoria.objects.select_related('usuario')[:100],'campos':['fecha','usuario','modulo','accion','descripcion']})
+
+@login_required
+def estado_cuenta(request):
+    """Consulta de estado individual, limitada al estudiante identificado en sesión."""
+    # Para los roles institucionales se usa el reporte filtrado. No exponer otros estudiantes.
+    from django.core.exceptions import PermissionDenied
+    if request.user.is_superuser or request.user.groups.filter(name__in=['Administrador','Tesorería','Director']).exists():
+        return redirect('cartera')
+    raise PermissionDenied('Su cuenta aún no está asociada a un estudiante. Solicite vinculación a administración.')

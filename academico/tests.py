@@ -28,3 +28,32 @@ class CicloTest(TestCase):
     def test_documento_duplicado(self):
         with self.assertRaises(Exception):
             Estudiante.objects.create(tipo_documento='TI',documento='TEST-01',nombres='Otro',apellidos='Ejemplo',fecha_nacimiento=date(2010,1,1),direccion='Ficticia',telefono='000')
+
+from django.test import Client
+from django.contrib.auth.models import Group
+
+class PermisosTest(TestCase):
+    def setUp(self):
+        self.secretaria=User.objects.create_user('secretaria_prueba',password='PruebaSegura1234!')
+        self.tesoreria=User.objects.create_user('tesoreria_prueba',password='PruebaSegura1234!')
+        s,_=Group.objects.get_or_create(name='Secretaría académica'); t,_=Group.objects.get_or_create(name='Tesorería')
+        self.secretaria.groups.add(s);self.tesoreria.groups.add(t)
+    def test_secretaria_no_puede_registrar_pago(self):
+        self.client.force_login(self.secretaria)
+        self.assertEqual(self.client.get('/pagos/nuevo/').status_code,403)
+    def test_tesoreria_si_puede_abrir_formulario(self):
+        self.client.force_login(self.tesoreria)
+        self.assertEqual(self.client.get('/pagos/nuevo/').status_code,200)
+    def test_estudiante_sin_permisos_no_ve_cartera(self):
+        u=User.objects.create_user('estudiante_prueba',password='PruebaSegura1234!')
+        self.client.force_login(u)
+        self.assertEqual(self.client.get('/cartera/').status_code,403)
+    def test_usuario_anonimo_redirigido_al_login(self):
+        self.assertEqual(self.client.get('/pagos/nuevo/').status_code,302)
+
+class BloqueoLoginTest(TestCase):
+    def test_cinco_intentos_invalidos_bloquean(self):
+        User.objects.create_user('usuario_bloqueo',password='ClaveCorrectaMuySegura123!')
+        for _ in range(5):
+            self.client.post('/login/',{'username':'usuario_bloqueo','password':'Incorrecta1!'})
+        self.assertEqual(self.client.post('/login/',{'username':'usuario_bloqueo','password':'Incorrecta1!'}).status_code,429)

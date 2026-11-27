@@ -15,5 +15,6 @@ urlpatterns=[
  path('obligaciones/',views.obligaciones,name='obligaciones'),
  path('pagos/',views.pagos,name='pagos'),path('pagos/nuevo/',views.pago_nuevo,name='pago_nuevo'),
  path('pagos/<int:pk>/anular/',views.pago_anular,name='pago_anular'),
+ path('estado-cuenta/',views.estado_cuenta,name='estado_cuenta'),
  path('cartera/',views.cartera,name='cartera'),path('reportes/',views.reporte,name='reportes'),path('auditoria/',views.auditoria,name='auditoria'),
 ]

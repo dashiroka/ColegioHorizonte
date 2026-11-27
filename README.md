@@ -1,30 +1,22 @@
-# Colegio Horizonte — Segunda entrega (versión 0.2)
+# Colegio Horizonte — Entrega final v1.0.0 (propuesta de actualización)
 
-Sistema académico-financiero de demostración para bachillerato privado en Bogotá. **Todos los datos de prueba son ficticios.**
+**Institución ficticia:** Colegio Horizonte, colegio privado de grados 6º a 11º en Colombia.
 
-## Funcionalidades incluidas
+**Finalidad:** registro de estudiantes y acudientes, grados, períodos, matrícula, generación de obligaciones, pagos, abonos, cartera y auditoría.
 
-- Autenticación y cierre de sesión de Django; cambio de contraseña.
-- Roles `Administrador`, `Secretaría académica`, `Tesorería` y `Director` aplicados en servidor.
-- Administración de estudiantes, acudientes, asociaciones, grados, grupos y períodos.
-- Matrículas con número único, validación de duplicidad y generación de obligaciones.
-- Configuración de conceptos de matrícula y pensión; 10 mensualidades dentro del período.
-- Registro de pagos parciales y totales, validación contra sobrepago, saldo calculado a partir de pagos confirmados.
-- Anulación auditada de pagos (solo administrador), cartera preliminar y CSV de matrículas.
-- Registro de auditoría para operaciones de aplicación importantes.
+**Tecnologías:** Django 5.2 / Python 3.12+ / PostgreSQL 18 / HTML / CSS / JavaScript / ReportLab / OpenPyXL.
 
-> **Alcance de la entrega 2:** los 10 reportes definitivos, exportación PDF y ampliación de perfiles de acceso quedan para la entrega 3. No usar como sistema productivo sin pruebas y endurecimiento adicional.
+> Importante: este repositorio contiene una **aplicación web de gestión**, no una página informativa. El enunciado del taller admite soluciones **web o de escritorio**. Si el docente requiere explícitamente escritorio, deberá realizarse una interfaz de escritorio alternativa.
 
-## Requisitos
+## Equipo
 
-- Python 3.11 o posterior compatible con Django 5.2.
-- PostgreSQL 15+ recomendado y su servidor iniciado; `psycopg` incluido en requirements.
-- Conexión a Internet **en tu computador** para instalar las dependencias Python.
+Añadir los nombres de todos los integrantes antes de la entrega.
 
-## Instalación en Windows con PostgreSQL
+## Instalación rápida en Windows
 
-1. Abre `sql/crear_base.sql` en pgAdmin Query Tool y ejecuta las dos instrucciones separadas como administrador. Sustituye `CAMBIAR_ESTA_CLAVE` por una contraseña propia **antes** de ejecutar. Si el rol o la base ya existen, omite los comandos correspondientes.
-2. En VS Code abre esta carpeta, inicia una terminal PowerShell y ejecuta:
+1. Instalar Python 3.12+ y PostgreSQL 18. Crear una base de datos vacía `colegio_horizonte` y un usuario de conexión con privilegios sobre ella.
+2. Descargar el proyecto desde GitHub con `git clone` o mediante **Code > Download ZIP**.
+3. Dentro de la carpeta que contiene `manage.py`:
 
 ```powershell
 py -m venv .venv
@@ -33,64 +25,69 @@ python -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-3. Edita `.env`: `DB_PASSWORD` debe ser la contraseña elegida. `SECRET_KEY` debe ser aleatoria y secreta; puedes generarla con:
+4. Editar `.env` para establecer `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SECRET_KEY` (genera una con `python -c "import secrets; print(secrets.token_urlsafe(50))"`). No subir `.env`.
+5. En un **PostgreSQL vacío**, ejecutar:
 
 ```powershell
-python -c "import secrets; print(secrets.token_urlsafe(50))"
-```
-
-4. Crea las tablas y datos iniciales:
-
-```powershell
-python manage.py migrate --run-syncdb
+python manage.py makemigrations academico
+python manage.py migrate
 python manage.py preparar_demo
 python manage.py createsuperuser
+python manage.py cargar_datos_finales
+python manage.py comprobar_cantidades
 python manage.py runserver
 ```
 
-5. Abre `http://127.0.0.1:8000/` e inicia sesión con el usuario administrador creado.
-6. En `http://127.0.0.1:8000/admin/` abre **Users**, crea tres usuarios adicionales y asígnales desde **Groups** respectivamente: `Secretaría académica`, `Tesorería` y `Director`. Se recomienda no darles `is_staff`; usarán la aplicación y no el panel de administración. El usuario administrador de Django (`superuser`) realiza la administración de usuarios y catálogos.
+6. Abrir `http://127.0.0.1:8000/`. Para administración usar `/admin/`.
+7. La carga imprime **una sola vez** las contraseñas temporales de los cinco usuarios ficticios. Guárdalas localmente y no las publiques.
 
-### Alternativa de prueba sin PostgreSQL
+**Nota para usuarios de la entrega 2:** Si ya existe una base de datos con migraciones aplicadas, **NO** eliminarla ni reconstruirla. Haz una copia de respaldo y usa `python manage.py migrate` para conservar los datos. La carga `cargar_datos_finales` agrega estudiantes ficticios marcados con prefijo `FICT-` para no confundirlos con los anteriores.
 
-Para una inspección local muy rápida, cambia `DB_ENGINE=sqlite` en `.env` y ejecuta los pasos 4 y 5. **Esta alternativa es solo para pruebas y no reemplaza la demostración requerida con PostgreSQL.**
+## Roles y seguridad
 
-## Demostración sugerida para el profesor
+Perfiles de prueba: Administrador, Director, Secretaría académica, Tesorería y Docente. El backend rechaza con HTTP 403 las operaciones no permitidas. Django utiliza hashing seguro, protección CSRF y consultas ORM parametrizadas. En producción, utilizar HTTPS y configurar `DEBUG=False`.
 
-1. Inicia sesión como **secretaría** y usa **Estudiantes → Nuevo registro**. Registra datos ficticios.
-2. Registra un acudiente y entra a **Acudientes → Asociar**.
-3. Usa **Matrículas → Nuevo registro**, elige el estudiante, grupo y período `2026`, valor `350000` y descuento `0`.
-4. Comprueba en **Obligaciones** que aparece el cobro de matrícula y las pensiones correspondientes.
-5. Cierra sesión y entra como **tesorería**.
-6. Usa **Pagos → Registrar pago o abono**, elige la obligación de matrícula y registra un abono de `100000`, referencia `ABONO-001`.
-7. En **Obligaciones**, observa saldo de `250000` y estado `Pago parcial` (si no ha vencido; si venció, muestra `Vencido` manteniendo el saldo correcto).
-8. Intenta registrar `300000` sobre la misma obligación: el sistema debe rechazarlo.
-9. Consulta **Cartera** y, con superusuario, **Auditoría**. Prueba que secretaría no puede acceder a `/pagos/nuevo/` (403).
+## Módulos
 
-## Documentos y pruebas
+- Estudiantes, acudientes y asociación con responsable de pago.
+- Grados, grupos, períodos y conceptos de cobro.
+- Matrículas con identificadores únicos y restricciones de duplicidad.
+- Obligaciones, pagos parciales y completos, anulación auditada.
+- Cartera y diez reportes exportables a PDF y Excel (filtrados por estudiante, período, grado y estado donde corresponda).
+- Auditoría de altas y anulaciones.
 
-- `docs/Informe_Entrega2.pdf`: desarrollo, decisiones técnicas y matriz de pruebas.
-- `docs/Manual_Preliminar.pdf`: instrucciones para el usuario.
-- `docs/Diccionario_Datos.pdf`: estructura de tablas y relaciones.
-- `academico/tests.py`: dos pruebas automatizadas propuestas. Ejecutar con `python manage.py test`.
-- `docs/Registro_Evidencias.md`: lista de pantallas a capturar tras ejecución real.
-
-## GitHub
+## Verificación
 
 ```powershell
-git init
-git add .
-git commit -m "Entrega 2: módulos académicos, matrícula, finanzas y seguridad"
-git branch -M main
-git remote add origin URL_REAL_DE_TU_REPOSITORIO
-git push -u origin main
+python manage.py check
+python manage.py test academico
 ```
 
-**Nunca subas** `.env`, `db.sqlite3`, contraseñas ni datos reales. `URL_REAL_DE_TU_REPOSITORIO` es un marcador que debes sustituir después de crear el repo en GitHub.
+Los resultados reales deben registrarse en `docs/Pruebas_Finales.md` tras ejecutar los comandos. Adjuntar capturas reales en `screenshots/`. Nunca presentar pruebas no ejecutadas como satisfactorias.
 
-## Limitaciones conocidas
+## Manuales y fuentes
 
-- No incluye todavía recuperación de contraseña por correo, protección adicional contra fuerza bruta ni los reportes finales.
-- Auditoría cubre operaciones del flujo de aplicación; no audita cambios directos hechos por administradores SQL ni cada edición del panel Django Admin.
-- No incluye exportación PDF ni conciliación bancaria.
-- El cálculo del estado `Vencido` prioriza la fecha de vencimiento sobre el estado `Pago parcial`. Los abonos continúan acumulados y no se pierde el saldo.
+- `docs/Manual_Instalacion_Final.pdf`
+- `docs/Manual_Usuario_Final.pdf`
+- `docs/Informe_Final.pdf`
+- `docs/Diccionario_Final.pdf`
+- `docs/Pruebas_Finales.md`
+- `docs/Guion_Sustentacion.md`
+
+## Historial y versión
+
+Entrega 1: análisis y diseño. Entrega 2: Django, PostgreSQL, matrícula y pagos. Entrega 3: reportes ampliados, datos ficticios y documentación. Crear etiqueta `v1.0.0` **solo después de comprobar en el equipo**.
+
+## Uso de IA (declaración)
+
+Se utilizó ChatGPT (modelo GPT-6) como apoyo en el análisis del enunciado, redacción de documentación y propuesta de código. Los integrantes deben revisar, comprender, ejecutar, probar y explicar cada módulo; reemplazar esta declaración si corresponde a la experiencia real del equipo.
+
+### Ejemplos de instrucciones utilizadas
+
+- «Preparar las tres entregas para un colegio de bachillerato ficticio».
+- «Generar pruebas funcionales de matrícula y abonos parciales».
+- «Añadir reportes financieros con datos reales de PostgreSQL».
+
+## Autoría y confidencialidad
+
+Solo datos ficticios. `.env`, credenciales, usuarios reales y archivos temporales están excluidos del repositorio.
