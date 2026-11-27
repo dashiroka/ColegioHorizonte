@@ -78,9 +78,6 @@ Los resultados reales deben registrarse en `docs/Pruebas_Finales.md` tras ejecut
 
 Entrega 1: análisis y diseño. Entrega 2: Django, PostgreSQL, matrícula y pagos. Entrega 3: reportes ampliados, datos ficticios y documentación. Crear etiqueta `v1.0.0` **solo después de comprobar en el equipo**.
 
-## Uso de IA (declaración)
-
-Se utilizó ChatGPT (modelo GPT-6) como apoyo en el análisis del enunciado, redacción de documentación y propuesta de código. Los integrantes deben revisar, comprender, ejecutar, probar y explicar cada módulo; reemplazar esta declaración si corresponde a la experiencia real del equipo.
 
 ### Ejemplos de instrucciones utilizadas
 
